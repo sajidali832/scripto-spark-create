@@ -1,0 +1,18 @@
+
+{
+  "name": "Scripto",
+  "short_name": "Scripto",
+  "description": "AI-powered content creation for creators",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#06b6d4",
+  "icons": [
+    {
+      "src": "/lovable-uploads/61b6b4ad-b40d-452b-a365-2824497eada7.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

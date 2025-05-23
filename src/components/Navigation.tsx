@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, Home, Wrench, User, Menu, X } from "lucide-react";
+import { Home, Wrench, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 
 export const Navigation = () => {
   const navigate = useNavigate();
@@ -22,16 +23,8 @@ export const Navigation = () => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div 
-            className="flex items-center space-x-2 cursor-pointer" 
-            onClick={() => navigate('/dashboard')}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              SCRIPTO
-            </h1>
+          <div onClick={() => navigate('/dashboard')}>
+            <Logo size="sm" animated={true} />
           </div>
 
           {/* Desktop Navigation */}
@@ -43,8 +36,8 @@ export const Navigation = () => {
                 onClick={() => navigate(item.path)}
                 className={`flex items-center space-x-2 ${
                   isActive(item.path) 
-                    ? 'bg-purple-100 text-purple-700' 
-                    : 'hover:bg-purple-50'
+                    ? 'bg-cyan-100 text-cyan-700' 
+                    : 'hover:bg-cyan-50'
                 }`}
               >
                 <item.icon className="w-4 h-4" />
@@ -78,8 +71,8 @@ export const Navigation = () => {
                   }}
                   className={`w-full justify-start ${
                     isActive(item.path) 
-                      ? 'bg-purple-100 text-purple-700' 
-                      : 'hover:bg-purple-50'
+                      ? 'bg-cyan-100 text-cyan-700' 
+                      : 'hover:bg-cyan-50'
                   }`}
                 >
                   <item.icon className="w-4 h-4 mr-2" />
