@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Navigation } from "@/components/Navigation";
 import { FileText, Hash, User, Lightbulb, Copy, Save, RotateCcw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Tools = () => {
   const { toast } = useToast();
@@ -31,66 +31,37 @@ const Tools = () => {
 
     setIsGenerating(true);
     
-    // Simulate API call with realistic delay
-    setTimeout(() => {
-      let content = "";
-      
-      switch (type) {
-        case "script":
-          content = `# ${topic} - YouTube Script (${duration} minutes)
+    try {
+      const response = await supabase.functions.invoke('generate-content', {
+        body: {
+          prompt: topic,
+          type,
+          platform,
+          duration
+        },
+      });
 
-## Introduction
-Welcome to today's video where we'll dive deep into ${topic}. This is a game-changer that you don't want to miss!
-
-## Main Content
-[Hook] Did you know that understanding ${topic} can completely transform your approach? Let me break this down for you...
-
-### Key Point 1
-The first thing you need to understand about ${topic} is...
-
-### Key Point 2
-Here's what most people get wrong about ${topic}...
-
-### Key Point 3
-The secret to mastering ${topic} lies in...
-
-## Conclusion
-If you found this helpful, make sure to like and subscribe for more content like this. What's your experience with ${topic}? Let me know in the comments below!
-
----
-*Generated with SCRIPTO AI - Enhanced with web search data*`;
-          break;
-        case "caption":
-          content = `🚀 Ready to dive into ${topic}? Here's everything you need to know!
-
-This ${topic} guide will change the way you think about success. Swipe to see the key insights that made all the difference! ✨
-
-What's your biggest challenge with ${topic}? Drop a comment below! 👇
-
-#${topic.replace(/\s+/g, '')} #ContentCreator #Growth #Tips #Success #Motivation`;
-          break;
-        case "hashtags":
-          content = `#${topic.replace(/\s+/g, '')} #${topic.replace(/\s+/g, '')}Tips #${topic.replace(/\s+/g, '')}Guide #ContentCreator #Digital #Success #Growth #Motivation #Inspiration #Learning #Skills #Business #Marketing #SocialMedia #Trending #Viral #Engaging #Quality #Professional #Expert #Tutorial #HowTo #Tips #Tricks #Secrets #Strategy #Results #Achievement #Goals #Progress #Development #Knowledge #Wisdom`;
-          break;
-        case "bio":
-          content = `🚀 ${topic} Expert & Content Creator
-✨ Helping you master ${topic} one post at a time
-📈 Turning passion into profit
-🎯 Join 10K+ followers on this journey
-👇 Get my free ${topic} guide below`;
-          break;
-        default:
-          content = `Generated content for ${topic}`;
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to generate content");
       }
-      
-      setGeneratedContent(content);
-      setIsGenerating(false);
+
+      const { data } = response;
+      setGeneratedContent(data.generatedContent);
       
       toast({
         title: "Content generated!",
         description: "Your AI-powered content is ready.",
       });
-    }, 2000);
+    } catch (error) {
+      console.error("Error generating content:", error);
+      toast({
+        title: "Generation failed",
+        description: error instanceof Error ? error.message : "Failed to generate content. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCopy = () => {
