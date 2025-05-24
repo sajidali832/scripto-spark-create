@@ -1,57 +1,162 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, FileText, Hash, User, Lightbulb, Plus, Copy, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Sparkles, FileText, Hash, User, Lightbulb, Plus, Copy, Trash2, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [savedContent, setSavedContent] = useState([
-    { id: 1, type: "Script", title: "YouTube Video: How to Start a Business", platform: "YouTube", createdAt: "2 hours ago" },
-    { id: 2, type: "Caption", title: "Instagram Post Caption", platform: "Instagram", createdAt: "1 day ago" },
-    { id: 3, type: "Hashtags", title: "Fitness Hashtags", platform: "Instagram", createdAt: "3 days ago" },
-  ]);
+  const { toast } = useToast();
+  const [savedContent, setSavedContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
-  const handleCopy = (id: number) => {
-    console.log("Copying content with id:", id);
-    // Implement copy functionality
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // Fetch user profile
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profileData) {
+            setUserData(profileData);
+          }
+          
+          // Fetch user content
+          const { data: contentData, error } = await supabase
+            .from('user_content')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+            
+          if (error) throw error;
+          
+          setSavedContent(contentData || []);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+
+  const handleCopy = async (id) => {
+    try {
+      // Find the content to copy
+      const contentToCopy = savedContent.find(item => item.id === id);
+      if (contentToCopy) {
+        await navigator.clipboard.writeText(contentToCopy.content);
+        toast({
+          title: "Content copied!",
+          description: "The content has been copied to your clipboard.",
+        });
+      }
+    } catch (error) {
+      console.error("Error copying content:", error);
+      toast({
+        title: "Copy failed",
+        description: "Could not copy content to clipboard.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setSavedContent(prev => prev.filter(item => item.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('user_content')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setSavedContent(prev => prev.filter(item => item.id !== id));
+      
+      toast({
+        title: "Content deleted",
+        description: "The content has been permanently deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      toast({
+        title: "Delete failed",
+        description: "Could not delete the content. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to get appropriate icon based on content type
+  const getTypeIcon = (type) => {
+    switch (type.toLowerCase()) {
+      case 'script':
+        return <FileText className="w-5 h-5 text-white" />;
+      case 'caption':
+        return <Sparkles className="w-5 h-5 text-white" />;
+      case 'hashtag':
+      case 'hashtags':
+        return <Hash className="w-5 h-5 text-white" />;
+      case 'bio':
+        return <User className="w-5 h-5 text-white" />;
+      default:
+        return <Lightbulb className="w-5 h-5 text-white" />;
+    }
+  };
+
+  // Function to format time elapsed
+  const getTimeElapsed = (timestamp) => {
+    const now = new Date();
+    const createdAt = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - createdAt) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-12">
-          <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+          <div className="flex flex-col sm:flex-row sm:items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 mb-4 sm:mb-0">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Welcome back to SCRIPTO</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">Welcome{userData?.full_name ? ` ${userData.full_name}` : ''} to SCRIPTO</h1>
               <p className="text-gray-600">Ready to create amazing content today?</p>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="grid md:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12">
             <Card 
               className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
               onClick={() => navigate('/tools')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <FileText className="w-6 h-6 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Script Generator</h3>
-                <p className="text-sm text-gray-600">Create YouTube scripts</p>
+                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Script Generator</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Create YouTube scripts</p>
               </CardContent>
             </Card>
 
@@ -59,12 +164,12 @@ const Dashboard = () => {
               className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
               onClick={() => navigate('/tools')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Hash className="w-6 h-6 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                  <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Hashtag Generator</h3>
-                <p className="text-sm text-gray-600">Trending hashtags</p>
+                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Hashtag Generator</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Trending hashtags</p>
               </CardContent>
             </Card>
 
@@ -72,12 +177,12 @@ const Dashboard = () => {
               className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
               onClick={() => navigate('/tools')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <User className="w-6 h-6 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Bio Generator</h3>
-                <p className="text-sm text-gray-600">Perfect profiles</p>
+                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Bio Generator</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Perfect profiles</p>
               </CardContent>
             </Card>
 
@@ -85,21 +190,21 @@ const Dashboard = () => {
               className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
               onClick={() => navigate('/tools')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <Lightbulb className="w-6 h-6 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                  <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h3 className="font-semibold mb-2">Ideas Generator</h3>
-                <p className="text-sm text-gray-600">Content inspiration</p>
+                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Ideas Generator</h3>
+                <p className="text-xs sm:text-sm text-gray-600">Content inspiration</p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Recent Content */}
+        {/* User Content */}
         <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-2xl">Your Recent Content</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Your Content</CardTitle>
             <Button 
               onClick={() => navigate('/tools')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
@@ -109,35 +214,40 @@ const Dashboard = () => {
             </Button>
           </CardHeader>
           <CardContent>
-            {savedContent.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading your content...</p>
+                </div>
+              </div>
+            ) : savedContent.length === 0 ? (
               <div className="text-center py-12">
-                <Sparkles className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No content yet</h3>
+                <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">No content yet</h3>
                 <p className="text-gray-600 mb-6">Start creating amazing content with our AI tools</p>
                 <Button 
                   onClick={() => navigate('/tools')}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Try a Feature
+                  Create Your First Content
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {savedContent.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center space-x-4">
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-4 mb-3 sm:mb-0">
                       <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                        {item.type === 'Script' && <FileText className="w-5 h-5 text-white" />}
-                        {item.type === 'Caption' && <User className="w-5 h-5 text-white" />}
-                        {item.type === 'Hashtags' && <Hash className="w-5 h-5 text-white" />}
+                        {getTypeIcon(item.type)}
                       </div>
                       <div>
-                        <h4 className="font-semibold">{item.title}</h4>
-                        <p className="text-sm text-gray-600">{item.platform} • {item.createdAt}</p>
+                        <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600">{item.platform || 'General'} • {getTimeElapsed(item.created_at)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 self-end sm:self-center">
                       <Button
                         variant="ghost"
                         size="sm"

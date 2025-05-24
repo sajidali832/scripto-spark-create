@@ -27,7 +27,7 @@ const Auth = () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         setSession(data.session);
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     };
     
@@ -37,7 +37,7 @@ const Auth = () => {
     const { data } = supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       if (currentSession) {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     });
     
@@ -90,7 +90,7 @@ const Auth = () => {
         description: "Welcome back to Scripto.",
       });
       
-      // Force page reload for clean state
+      // Force page reload for clean state and redirection
       window.location.href = '/dashboard';
     } catch (error) {
       toast({
@@ -133,7 +133,7 @@ const Auth = () => {
       
       toast({
         title: "Account created!",
-        description: "Check your email for the confirmation link.",
+        description: "Your account has been successfully created.",
       });
       
       // If email confirmation is disabled in Supabase settings, this will work immediately
@@ -184,7 +184,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
         {/* Back to Home */}
         <Button
