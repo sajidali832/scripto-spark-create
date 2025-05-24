@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation } from "@/components/Navigation";
 import { FileText, Hash, User, Lightbulb, Copy, Save, RotateCcw, Sparkles, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ToolCard } from "@/components/ToolCard";
+import { IdeaGenerator } from "@/components/IdeaGenerator";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const Tools = () => {
   const { toast } = useToast();
@@ -24,6 +26,16 @@ const Tools = () => {
   const [duration, setDuration] = useState("");
   const [title, setTitle] = useState("");
   const [activeTab, setActiveTab] = useState("script");
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading for better UX
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleGenerate = async (type) => {
     if (!topic.trim()) {
@@ -52,7 +64,9 @@ const Tools = () => {
       if (error) throw error;
 
       if (data?.generatedContent) {
-        setGeneratedContent(data.generatedContent);
+        // Strip out any special characters mentioned
+        let cleanContent = data.generatedContent.replace(/[#*"':;_\(\)]/g, ' ');
+        setGeneratedContent(cleanContent);
         toast({
           title: "Content generated!",
           description: "Your AI-powered content is ready.",
@@ -73,8 +87,15 @@ const Tools = () => {
           case "bio":
             demoContent = generateDemoBio(topic, platform);
             break;
+          case "ideas":
+            demoContent = generateDemoIdeas(topic, platform);
+            break;
         }
-        setGeneratedContent(demoContent);
+        
+        // Strip out any special characters mentioned
+        let cleanContent = demoContent.replace(/[#*"':;_\(\)]/g, ' ');
+        setGeneratedContent(cleanContent);
+        
         toast({
           title: "Using demo content",
           description: "We're using demo content since the AI service is unavailable.",
@@ -98,8 +119,14 @@ const Tools = () => {
         case "bio":
           demoContent = generateDemoBio(topic, platform);
           break;
+        case "ideas":
+          demoContent = generateDemoIdeas(topic, platform);
+          break;
       }
-      setGeneratedContent(demoContent);
+      
+      // Strip out any special characters mentioned
+      let cleanContent = demoContent.replace(/[#*"':;_\(\)]/g, ' ');
+      setGeneratedContent(cleanContent);
       
       toast({
         title: "Using demo content",
@@ -179,12 +206,12 @@ const Tools = () => {
     const durationMinutes = duration || "5";
     const intro = `Title: ${topic}\nPlatform: ${platformText}\nDuration: ${durationMinutes} minutes\n\n`;
     
-    return `${intro}[Opening Scene]\n\nHey everyone, welcome back to my channel! Today we're diving deep into ${topic}.\n\nHave you ever wondered how ${topic} works? Well, I'm going to break it down for you in this ${platformText}.\n\n[Main Content]\n\nFirst, let's talk about why ${topic} matters. There are three key reasons:\n\n1. It helps you understand the world better\n2. It improves your decision-making process\n3. It connects you with like-minded people\n\nNow, let me share a personal story about my experience with ${topic}...\n\n[Personal Anecdote Section]\n\nA few years ago, I discovered ${topic} by accident, and it changed my perspective entirely. I remember thinking, Why didnt I learn about this sooner?\n\n[Informative Section]\n\nHere are some fascinating facts about ${topic} that most people dont know:\n- The concept originated in the early 2000s\n- Over 5 million people worldwide engage with it daily\n- Experts predict it will revolutionize the industry by 2025\n\n[Closing]\n\nThat's all for today's video on ${topic}! If you found this valuable, dont forget to like, subscribe, and hit that notification bell. Drop your questions in the comments below, and I'll see you in the next video!\n\n[Outro]\n\nStay curious and keep learning!`;
+    return `${intro}[Opening Scene]\n\nHey everyone, welcome back to my channel! Today we are diving deep into ${topic}.\n\nHave you ever wondered how ${topic} works? Well, I am going to break it down for you in this ${platformText}.\n\n[Main Content]\n\nFirst, let us talk about why ${topic} matters. There are three key reasons:\n\n1. It helps you understand the world better\n2. It improves your decision making process\n3. It connects you with like minded people\n\nNow, let me share a personal story about my experience with ${topic}...\n\n[Personal Anecdote Section]\n\nA few years ago, I discovered ${topic} by accident, and it changed my perspective entirely. I remember thinking, Why did not I learn about this sooner?\n\n[Informative Section]\n\nHere are some fascinating facts about ${topic} that most people do not know:\n- The concept originated in the early 2000s\n- Over 5 million people worldwide engage with it daily\n- Experts predict it will revolutionize the industry by 2025\n\n[Closing]\n\nThat is all for today is video on ${topic}! If you found this valuable, do not forget to like, subscribe, and hit that notification bell. Drop your questions in the comments below, and I will see you in the next video!\n\n[Outro]\n\nStay curious and keep learning!`;
   };
 
   const generateDemoCaption = (topic, platform) => {
-    const hashtags = generateDemoHashtags(topic, platform);
-    return `Exploring the fascinating world of ${topic} today and couldnt be more excited to share these insights with you all!\n\nHave you ever wondered how ${topic} could transform your daily routine? Swipe through to discover my top 3 takeaways that might just change your perspective!\n\nWhat I've learned about ${topic} this week:\n\n1 It's not just about the destination, but the journey\n2 Small consistent steps lead to remarkable progress\n3 Community support makes all the difference\n\nComment below if you've had any experiences with ${topic} - would love to hear your thoughts!\n\n${hashtags}`;
+    const cleanHashtags = generateDemoHashtags(topic, platform).replace(/[#]/g, '');
+    return `Exploring the fascinating world of ${topic} today and could not be more excited to share these insights with you all!\n\nHave you ever wondered how ${topic} could transform your daily routine? Swipe through to discover my top 3 takeaways that might just change your perspective!\n\nWhat I have learned about ${topic} this week:\n\n1 It is not just about the destination, but the journey\n2 Small consistent steps lead to remarkable progress\n3 Community support makes all the difference\n\nComment below if you have had any experiences with ${topic}. Would love to hear your thoughts!\n\n${cleanHashtags}`;
   };
 
   const generateDemoHashtags = (topic, platform) => {
@@ -234,6 +261,7 @@ const Tools = () => {
       result = result.concat(platformTags);
     }
     
+    // Join without hashtags per request
     return result.join(' ');
   };
 
@@ -244,6 +272,10 @@ const Tools = () => {
                         platform === "tiktok" ? "TikTok" : "social media";
     
     return `${topic} Enthusiast & Content Creator\n\nSharing insights about ${topic} and digital innovation\nHelping creators build impactful online presence\nFocused on authentic growth strategies\nExploring the intersection of creativity and technology\n\nDM for collaborations\nLatest project link in bio!\n\nTransforming how we think about ${topic}, one post at a time.`;
+  };
+
+  const generateDemoIdeas = (topic, platform) => {
+    return `Content Ideas for ${topic} on ${platform || "all platforms"}:\n\n1. "Day in the Life of a ${topic} Expert" - Show behind-the-scenes of your work/passion\n\n2. "Top 5 Myths about ${topic} Debunked" - Address common misconceptions\n\n3. "${topic} Transformation Challenge" - Before and after results\n\n4. "How to Get Started with ${topic} as a Beginner" - Entry-level tutorial\n\n5. "What Nobody Tells You About ${topic}" - Insider perspectives\n\n6. "My Favorite Tools for ${topic}" - Resource roundup\n\n7. "${topic} Q&A" - Answer commonly asked questions\n\n8. "The History of ${topic} in 60 Seconds" - Quick educational content\n\n9. "Why I Love ${topic}" - Personal story content\n\n10. "${topic} Tips That Changed My Life" - High-value actionable advice`;
   };
 
   // Animation variants
@@ -271,6 +303,10 @@ const Tools = () => {
     }
   };
 
+  if (loading) {
+    return <LoadingScreen message="Loading AI content tools..." />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <Navigation />
@@ -287,7 +323,7 @@ const Tools = () => {
         </motion.div>
 
         <Tabs defaultValue="script" className="space-y-8" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-fit lg:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-fit lg:grid-cols-5">
             <TabsTrigger value="script" className="flex items-center space-x-2">
               <FileText className="w-4 h-4" />
               <span>Script</span>
@@ -304,6 +340,10 @@ const Tools = () => {
               <User className="w-4 h-4" />
               <span>Bio</span>
             </TabsTrigger>
+            <TabsTrigger value="ideas" className="flex items-center space-x-2">
+              <Lightbulb className="w-4 h-4" />
+              <span>Ideas</span>
+            </TabsTrigger>
           </TabsList>
 
           <motion.div 
@@ -314,189 +354,273 @@ const Tools = () => {
           >
             {/* Input Panel */}
             <motion.div variants={itemVariants}>
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Lightbulb className="w-5 h-5 text-purple-600" />
-                    <span>Content Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="topic">Topic/Subject</Label>
-                    <Input
-                      id="topic"
-                      placeholder="Enter your topic or subject"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      className="h-12 transition-all duration-200 focus:scale-[1.01]"
-                    />
-                  </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {activeTab === "ideas" ? (
+                    <IdeaGenerator onGenerateContent={setGeneratedContent} />
+                  ) : (
+                    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                      <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                          <Lightbulb className="w-5 h-5 text-purple-600" />
+                          <span>Content Settings</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="topic">Topic/Subject</Label>
+                          <Input
+                            id="topic"
+                            placeholder="Enter your topic or subject"
+                            value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                            className="h-12 transition-all duration-200 focus:scale-[1.01]"
+                          />
+                        </div>
 
-                  <TabsContent value="script" className="space-y-4 mt-0">
-                    <div className="space-y-2">
-                      <Label>Platform</Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="youtube">YouTube</SelectItem>
-                          <SelectItem value="reels">Instagram Reels</SelectItem>
-                          <SelectItem value="shorts">YouTube Shorts</SelectItem>
-                          <SelectItem value="tiktok">TikTok</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Duration</Label>
-                      <Select value={duration} onValueChange={setDuration}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="3">3 minutes</SelectItem>
-                          <SelectItem value="5">5 minutes</SelectItem>
-                          <SelectItem value="10">10 minutes</SelectItem>
-                          <SelectItem value="15">15 minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TabsContent>
+                        <TabsContent value="script" className="space-y-4 mt-0">
+                          <div className="space-y-2">
+                            <Label>Platform</Label>
+                            <Select value={platform} onValueChange={setPlatform}>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select platform" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="youtube">YouTube</SelectItem>
+                                <SelectItem value="reels">Instagram Reels</SelectItem>
+                                <SelectItem value="shorts">YouTube Shorts</SelectItem>
+                                <SelectItem value="tiktok">TikTok</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Duration</Label>
+                            <Select value={duration} onValueChange={setDuration}>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select duration" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="3">3 minutes</SelectItem>
+                                <SelectItem value="5">5 minutes</SelectItem>
+                                <SelectItem value="10">10 minutes</SelectItem>
+                                <SelectItem value="15">15 minutes</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TabsContent>
 
-                  <TabsContent value="caption" className="space-y-4 mt-0">
-                    <div className="space-y-2">
-                      <Label>Platform</Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="instagram">Instagram</SelectItem>
-                          <SelectItem value="facebook">Facebook</SelectItem>
-                          <SelectItem value="linkedin">LinkedIn</SelectItem>
-                          <SelectItem value="twitter">Twitter</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TabsContent>
+                        <TabsContent value="caption" className="space-y-4 mt-0">
+                          <div className="space-y-2">
+                            <Label>Platform</Label>
+                            <Select value={platform} onValueChange={setPlatform}>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select platform" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="instagram">Instagram</SelectItem>
+                                <SelectItem value="facebook">Facebook</SelectItem>
+                                <SelectItem value="linkedin">LinkedIn</SelectItem>
+                                <SelectItem value="twitter">Twitter</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Content Category</Label>
+                            <Select>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="education">Education</SelectItem>
+                                <SelectItem value="entertainment">Entertainment</SelectItem>
+                                <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                                <SelectItem value="business">Business</SelectItem>
+                                <SelectItem value="technology">Technology</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TabsContent>
 
-                  <TabsContent value="hashtags" className="space-y-4 mt-0">
-                    <div className="space-y-2">
-                      <Label>Platform</Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="instagram">Instagram</SelectItem>
-                          <SelectItem value="tiktok">TikTok</SelectItem>
-                          <SelectItem value="twitter">Twitter</SelectItem>
-                          <SelectItem value="linkedin">LinkedIn</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TabsContent>
+                        <TabsContent value="hashtags" className="space-y-4 mt-0">
+                          <div className="space-y-2">
+                            <Label>Platform</Label>
+                            <Select value={platform} onValueChange={setPlatform}>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select platform" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="instagram">Instagram</SelectItem>
+                                <SelectItem value="tiktok">TikTok</SelectItem>
+                                <SelectItem value="twitter">Twitter</SelectItem>
+                                <SelectItem value="linkedin">LinkedIn</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Content Category</Label>
+                            <Select>
+                              <SelectTrigger className="h-12">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white">
+                                <SelectItem value="education">Education</SelectItem>
+                                <SelectItem value="entertainment">Entertainment</SelectItem>
+                                <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                                <SelectItem value="business">Business</SelectItem>
+                                <SelectItem value="technology">Technology</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TabsContent>
 
-                  <TabsContent value="bio" className="space-y-4 mt-0">
-                    <div className="space-y-2">
-                      <Label>Platform</Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="instagram">Instagram</SelectItem>
-                          <SelectItem value="twitter">Twitter</SelectItem>
-                          <SelectItem value="linkedin">LinkedIn</SelectItem>
-                          <SelectItem value="tiktok">TikTok</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </TabsContent>
+                        <TabsContent value="bio" className="space-y-4 mt-0">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Platform</Label>
+                              <Select value={platform} onValueChange={setPlatform}>
+                                <SelectTrigger className="h-12">
+                                  <SelectValue placeholder="Select platform" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  <SelectItem value="instagram">Instagram</SelectItem>
+                                  <SelectItem value="twitter">Twitter</SelectItem>
+                                  <SelectItem value="linkedin">LinkedIn</SelectItem>
+                                  <SelectItem value="tiktok">TikTok</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label>Industry</Label>
+                              <Select>
+                                <SelectTrigger className="h-12">
+                                  <SelectValue placeholder="Select industry" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  <SelectItem value="tech">Technology</SelectItem>
+                                  <SelectItem value="creative">Creative Arts</SelectItem>
+                                  <SelectItem value="business">Business</SelectItem>
+                                  <SelectItem value="health">Health & Wellness</SelectItem>
+                                  <SelectItem value="education">Education</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </TabsContent>
 
-                  <TabsContent value="script">
-                    <Button
-                      onClick={() => handleGenerate("script")}
-                      disabled={isGenerating}
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] transform"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating Script...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="w-4 h-4 mr-2" />
-                          Generate Script
-                        </>
-                      )}
-                    </Button>
-                  </TabsContent>
+                        <TabsContent value="script">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              onClick={() => handleGenerate("script")}
+                              disabled={isGenerating}
+                              className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating Script...
+                                </>
+                              ) : (
+                                <>
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Generate Script
+                                </>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </TabsContent>
 
-                  <TabsContent value="caption">
-                    <Button
-                      onClick={() => handleGenerate("caption")}
-                      disabled={isGenerating}
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] transform"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating Caption...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generate Caption
-                        </>
-                      )}
-                    </Button>
-                  </TabsContent>
+                        <TabsContent value="caption">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              onClick={() => handleGenerate("caption")}
+                              disabled={isGenerating}
+                              className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating Caption...
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                  Generate Caption
+                                </>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </TabsContent>
 
-                  <TabsContent value="hashtags">
-                    <Button
-                      onClick={() => handleGenerate("hashtags")}
-                      disabled={isGenerating}
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] transform"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating Hashtags...
-                        </>
-                      ) : (
-                        <>
-                          <Hash className="w-4 h-4 mr-2" />
-                          Generate Hashtags
-                        </>
-                      )}
-                    </Button>
-                  </TabsContent>
+                        <TabsContent value="hashtags">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              onClick={() => handleGenerate("hashtags")}
+                              disabled={isGenerating}
+                              className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating Hashtags...
+                                </>
+                              ) : (
+                                <>
+                                  <Hash className="w-4 h-4 mr-2" />
+                                  Generate Hashtags
+                                </>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </TabsContent>
 
-                  <TabsContent value="bio">
-                    <Button
-                      onClick={() => handleGenerate("bio")}
-                      disabled={isGenerating}
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-[1.02] transform"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating Bio...
-                        </>
-                      ) : (
-                        <>
-                          <User className="w-4 h-4 mr-2" />
-                          Generate Bio
-                        </>
-                      )}
-                    </Button>
-                  </TabsContent>
-                </CardContent>
-              </Card>
+                        <TabsContent value="bio">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              onClick={() => handleGenerate("bio")}
+                              disabled={isGenerating}
+                              className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                            >
+                              {isGenerating ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating Bio...
+                                </>
+                              ) : (
+                                <>
+                                  <User className="w-4 h-4 mr-2" />
+                                  Generate Bio
+                                </>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </TabsContent>
+                      </CardContent>
+                    </Card>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </motion.div>
 
             {/* Output Panel */}
@@ -507,71 +631,117 @@ const Tools = () => {
                     <span>Generated Content</span>
                     {generatedContent && (
                       <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopy}
-                          className="hover:bg-purple-50 transition-all duration-200 hover:scale-105"
-                          disabled={isGenerating}
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSave}
-                          className="hover:bg-green-50 transition-all duration-200 hover:scale-105"
-                          disabled={isGenerating || isSaving}
-                        >
-                          {isSaving ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Save className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <TabsContent value="script" className="m-0">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRegenerate("script")}
-                            className="hover:bg-blue-50 transition-all duration-200 hover:scale-105"
+                            onClick={handleCopy}
+                            className="hover:bg-purple-50 transition-all duration-200"
                             disabled={isGenerating}
                           >
-                            <RotateCcw className="w-4 h-4" />
+                            <Copy className="w-4 h-4" />
                           </Button>
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSave}
+                            className="hover:bg-green-50 transition-all duration-200"
+                            disabled={isGenerating || isSaving}
+                          >
+                            {isSaving ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </motion.div>
+                        <TabsContent value="script" className="m-0">
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegenerate("script")}
+                              className="hover:bg-blue-50 transition-all duration-200"
+                              disabled={isGenerating}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
                         </TabsContent>
                         <TabsContent value="caption" className="m-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRegenerate("caption")}
-                            className="hover:bg-blue-50 transition-all duration-200 hover:scale-105"
-                            disabled={isGenerating}
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                           >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegenerate("caption")}
+                              className="hover:bg-blue-50 transition-all duration-200"
+                              disabled={isGenerating}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
                         </TabsContent>
                         <TabsContent value="hashtags" className="m-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRegenerate("hashtags")}
-                            className="hover:bg-blue-50 transition-all duration-200 hover:scale-105"
-                            disabled={isGenerating}
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                           >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegenerate("hashtags")}
+                              className="hover:bg-blue-50 transition-all duration-200"
+                              disabled={isGenerating}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
                         </TabsContent>
                         <TabsContent value="bio" className="m-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRegenerate("bio")}
-                            className="hover:bg-blue-50 transition-all duration-200 hover:scale-105"
-                            disabled={isGenerating}
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                           >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegenerate("bio")}
+                              className="hover:bg-blue-50 transition-all duration-200"
+                              disabled={isGenerating}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
+                        </TabsContent>
+                        <TabsContent value="ideas" className="m-0">
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRegenerate("ideas")}
+                              className="hover:bg-blue-50 transition-all duration-200"
+                              disabled={isGenerating}
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
                         </TabsContent>
                       </div>
                     )}
@@ -592,10 +762,20 @@ const Tools = () => {
                       transition={{ delay: 0.3 }}
                       className="flex items-center justify-center h-[400px] text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed"
                     >
-                      <div className="text-center px-4">
-                        <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300 animate-pulse" />
+                      <motion.div 
+                        className="text-center px-4"
+                        animate={{ 
+                          y: [0, -10, 0],
+                        }}
+                        transition={{ 
+                          duration: 3,
+                          repeat: Infinity,
+                          repeatType: "loop"
+                        }}
+                      >
+                        <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                         <p>Enter a topic and click generate to see your AI-powered content here</p>
-                      </div>
+                      </motion.div>
                     </motion.div>
                   )}
                 </CardContent>
@@ -635,6 +815,10 @@ const Tools = () => {
             />
           </div>
         </motion.div>
+
+        <div className="mt-8 text-center text-xs text-gray-400">
+          <p>Crafted with ❤️ by Sajid</p>
+        </div>
       </div>
     </div>
   );

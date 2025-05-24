@@ -12,6 +12,7 @@ import Tools from "./pages/Tools";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { supabase } from "./integrations/supabase/client";
+import { LoadingScreen } from "./components/LoadingScreen";
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
@@ -33,6 +34,23 @@ const ScrollToTop = () => {
   }, [pathname]);
   
   return null;
+};
+
+// Clean up authentication state
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
 };
 
 // AuthRequired component to protect routes
@@ -62,14 +80,7 @@ const AuthRequired = ({ children }) => {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-t-cyan-500 border-r-cyan-500 border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your profile..." />;
   }
 
   // Redirect if not authenticated
@@ -96,14 +107,7 @@ const HomeWithAuth = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-t-cyan-500 border-r-cyan-500 border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Preparing your experience..." />;
   }
 
   // If user is authenticated, redirect to dashboard
