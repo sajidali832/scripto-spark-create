@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
 
@@ -19,7 +18,7 @@ export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
         className="flex flex-col items-center"
       >
         <div className="mb-6 relative">
-          <Logo size="xl" withText={true} animated={true} />
+          <Logo size="lg" withText={true} animated={true} />
           <motion.div
             className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full"
             initial={{ width: "0%" }}
