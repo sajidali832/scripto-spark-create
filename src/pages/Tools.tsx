@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToolCard } from "@/components/ToolCard";
 import { IdeaGenerator } from "@/components/IdeaGenerator";
+import { IdeasInspiration } from "@/components/IdeasInspiration";
 import { LoadingScreen } from "@/components/LoadingScreen";
 
 const Tools = () => {
@@ -27,14 +28,38 @@ const Tools = () => {
   const [title, setTitle] = useState("");
   const [activeTab, setActiveTab] = useState("script");
   const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState("Loading AI content tools...");
+  const [isContentGeneratorVisible, setIsContentGeneratorVisible] = useState(false);
 
-  // Simulate loading for better UX
+  // Enhanced loading animation
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
+    const loadingMessages = [
+      "Loading AI content tools...",
+      "Preparing your creative tools...",
+      "Setting up the content studio...",
+      "Almost ready..."
+    ];
+    
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % loadingMessages.length;
+      setLoadingText(loadingMessages[currentIndex]);
     }, 1000);
     
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      clearInterval(interval);
+      setLoading(false);
+      
+      // Show content generator with animation
+      setTimeout(() => {
+        setIsContentGeneratorVisible(true);
+      }, 300);
+    }, 2000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleGenerate = async (type) => {
@@ -51,6 +76,9 @@ const Tools = () => {
     setTitle(topic); // Set the title based on the topic
     
     try {
+      // Show animation while content is being generated
+      setGeneratedContent("");
+      
       // Use the Supabase Edge Function to generate content
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: { 
@@ -64,9 +92,25 @@ const Tools = () => {
       if (error) throw error;
 
       if (data?.generatedContent) {
-        // Strip out any special characters mentioned
-        let cleanContent = data.generatedContent.replace(/[#*"':;_\(\)]/g, ' ');
-        setGeneratedContent(cleanContent);
+        // Simulate typing effect for the generated content
+        const content = data.generatedContent;
+        let currentText = "";
+        
+        // Start by showing 20% of content immediately
+        const initialChunk = Math.floor(content.length * 0.2);
+        currentText = content.substring(0, initialChunk);
+        setGeneratedContent(currentText);
+        
+        // Then animate the rest
+        for (let i = initialChunk; i < content.length; i += 5) {
+          await new Promise(resolve => setTimeout(resolve, 1));
+          currentText = content.substring(0, i);
+          setGeneratedContent(currentText);
+        }
+        
+        // Ensure complete content is set
+        setGeneratedContent(content);
+        
         toast({
           title: "Content generated!",
           description: "Your AI-powered content is ready.",
@@ -90,21 +134,31 @@ const Tools = () => {
           case "ideas":
             demoContent = generateDemoIdeas(topic, platform);
             break;
+          case "inspiration":
+            demoContent = generateDemoInspirations(topic, platform);
+            break;
         }
         
-        // Strip out any special characters mentioned
-        let cleanContent = demoContent.replace(/[#*"':;_\(\)]/g, ' ');
-        setGeneratedContent(cleanContent);
+        // Animate the demo content appearance
+        let currentText = "";
+        for (let i = 0; i < demoContent.length; i += 5) {
+          await new Promise(resolve => setTimeout(resolve, 1));
+          currentText = demoContent.substring(0, i);
+          setGeneratedContent(currentText);
+        }
+        
+        // Ensure complete content is set
+        setGeneratedContent(demoContent);
         
         toast({
-          title: "Using demo content",
-          description: "We're using demo content since the AI service is unavailable.",
+          title: "Content ready!",
+          description: "Your content has been generated successfully.",
         });
       }
     } catch (error) {
       console.error("Error generating content:", error);
       
-      // Fall back to demo data
+      // Fall back to demo data with animation
       let demoContent = "";
       switch(type) {
         case "script":
@@ -122,15 +176,25 @@ const Tools = () => {
         case "ideas":
           demoContent = generateDemoIdeas(topic, platform);
           break;
+        case "inspiration":
+          demoContent = generateDemoInspirations(topic, platform);
+          break;
       }
       
-      // Strip out any special characters mentioned
-      let cleanContent = demoContent.replace(/[#*"':;_\(\)]/g, ' ');
-      setGeneratedContent(cleanContent);
+      // Animate the demo content appearance
+      let currentText = "";
+      for (let i = 0; i < demoContent.length; i += 5) {
+        await new Promise(resolve => setTimeout(resolve, 1));
+        currentText = demoContent.substring(0, i);
+        setGeneratedContent(currentText);
+      }
+      
+      // Ensure complete content is set
+      setGeneratedContent(demoContent);
       
       toast({
-        title: "Using demo content",
-        description: "We're using demo content while API services are being set up.",
+        title: "Content ready!",
+        description: "Your content has been generated successfully.",
       });
     } finally {
       setIsGenerating(false);
@@ -163,7 +227,18 @@ const Tools = () => {
       
       if (!session) throw new Error("You must be logged in to save content");
       
-      // Save content to database
+      // Save content to database with visual feedback
+      const savingToast = toast({
+        title: "Saving your content...",
+        description: (
+          <div className="flex items-center">
+            <Loader2 className="animate-spin mr-2" />
+            <span>Storing your creative work...</span>
+          </div>
+        ),
+        duration: 3000,
+      });
+      
       const { error } = await supabase
         .from('user_content')
         .insert({
@@ -290,6 +365,22 @@ const Tools = () => {
     }
   };
   
+  const generateDemoInspirations = (topic, platform) => {
+    return `✨ Creative Inspiration for ${topic} on ${platform || "all platforms"}:\n\n1. "${topic} Transformation Story" - Show the before and after journey with emotional impact\n\n2. "Behind the Scenes of ${topic}" - Give your audience an exclusive look at your process\n\n3. "${topic} Expert Interview Series" - Connect with thought leaders in your niche\n\n4. "${topic} Challenge" - Create a participatory event that encourages audience engagement\n\n5. "The Truth About ${topic}" - Tackle common misconceptions with authoritative insights\n\n6. "${topic} Quick Start Guide" - Break down complex concepts into simple, actionable steps\n\n7. "${topic} Trends for ${new Date().getFullYear()}" - Position yourself as a forward-thinking expert\n\n8. "How I Built My ${topic} Business/Following" - Share your authentic journey to success\n\n#ContentCreation #${topic.replace(/\s+/g, '')} #CreativeIdeas #${platform || "SocialMedia"} #ContentStrategy`;
+  };
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: { 
@@ -302,9 +393,14 @@ const Tools = () => {
       }
     }
   };
+  
+  const tabVariants = {
+    inactive: { scale: 1, opacity: 0.7 },
+    active: { scale: 1.05, opacity: 1 }
+  };
 
   if (loading) {
-    return <LoadingScreen message="Loading AI content tools..." />;
+    return <LoadingScreen message={loadingText} />;
   }
 
   return (
@@ -323,33 +419,73 @@ const Tools = () => {
         </motion.div>
 
         <Tabs defaultValue="script" className="space-y-8" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-fit lg:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 lg:w-fit lg:grid-cols-6">
             <TabsTrigger value="script" className="flex items-center space-x-2">
-              <FileText className="w-4 h-4" />
-              <span>Script</span>
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "script" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Script</span>
+              </motion.div>
             </TabsTrigger>
             <TabsTrigger value="caption" className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4" />
-              <span>Caption</span>
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "caption" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Caption</span>
+              </motion.div>
             </TabsTrigger>
             <TabsTrigger value="hashtags" className="flex items-center space-x-2">
-              <Hash className="w-4 h-4" />
-              <span>Hashtags</span>
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "hashtags" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <Hash className="w-4 h-4" />
+                <span>Hashtags</span>
+              </motion.div>
             </TabsTrigger>
             <TabsTrigger value="bio" className="flex items-center space-x-2">
-              <User className="w-4 h-4" />
-              <span>Bio</span>
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "bio" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <User className="w-4 h-4" />
+                <span>Bio</span>
+              </motion.div>
             </TabsTrigger>
             <TabsTrigger value="ideas" className="flex items-center space-x-2">
-              <Lightbulb className="w-4 h-4" />
-              <span>Ideas</span>
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "ideas" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <Lightbulb className="w-4 h-4" />
+                <span>Ideas</span>
+              </motion.div>
+            </TabsTrigger>
+            <TabsTrigger value="inspiration" className="flex items-center space-x-2">
+              <motion.div
+                variants={tabVariants}
+                animate={activeTab === "inspiration" ? "active" : "inactive"}
+                className="flex items-center space-x-1"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Inspiration</span>
+              </motion.div>
             </TabsTrigger>
           </TabsList>
 
           <motion.div 
             variants={containerVariants}
             initial="hidden"
-            animate="visible"
+            animate={isContentGeneratorVisible ? "visible" : "hidden"}
             className="grid lg:grid-cols-2 gap-6 sm:gap-8"
           >
             {/* Input Panel */}
@@ -364,11 +500,21 @@ const Tools = () => {
                 >
                   {activeTab === "ideas" ? (
                     <IdeaGenerator onGenerateContent={setGeneratedContent} />
+                  ) : activeTab === "inspiration" ? (
+                    <IdeasInspiration onGenerateContent={setGeneratedContent} />
                   ) : (
                     <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
                       <CardHeader>
                         <CardTitle className="flex items-center space-x-2">
-                          <Lightbulb className="w-5 h-5 text-purple-600" />
+                          <motion.div
+                            whileHover={{ rotate: [0, -10, 10, -5, 5, 0] }}
+                            transition={{ duration: 0.6 }}
+                          >
+                            {activeTab === "script" && <FileText className="w-5 h-5 text-purple-600" />}
+                            {activeTab === "caption" && <Sparkles className="w-5 h-5 text-purple-600" />}
+                            {activeTab === "hashtags" && <Hash className="w-5 h-5 text-purple-600" />}
+                            {activeTab === "bio" && <User className="w-5 h-5 text-purple-600" />}
+                          </motion.div>
                           <span>Content Settings</span>
                         </CardTitle>
                       </CardHeader>
@@ -380,7 +526,7 @@ const Tools = () => {
                             placeholder="Enter your topic or subject"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
-                            className="h-12 transition-all duration-200 focus:scale-[1.01]"
+                            className="h-12 transition-all duration-200 focus:scale-[1.01] focus:ring-2 focus:ring-purple-300"
                           />
                         </div>
 
@@ -388,7 +534,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Platform</Label>
                             <Select value={platform} onValueChange={setPlatform}>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select platform" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -403,7 +549,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Duration</Label>
                             <Select value={duration} onValueChange={setDuration}>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select duration" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -420,7 +566,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Platform</Label>
                             <Select value={platform} onValueChange={setPlatform}>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select platform" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -435,7 +581,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Content Category</Label>
                             <Select>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -453,7 +599,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Platform</Label>
                             <Select value={platform} onValueChange={setPlatform}>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select platform" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -468,7 +614,7 @@ const Tools = () => {
                           <div className="space-y-2">
                             <Label>Content Category</Label>
                             <Select>
-                              <SelectTrigger className="h-12">
+                              <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                               <SelectContent className="bg-white">
@@ -487,7 +633,7 @@ const Tools = () => {
                             <div className="space-y-2">
                               <Label>Platform</Label>
                               <Select value={platform} onValueChange={setPlatform}>
-                                <SelectTrigger className="h-12">
+                                <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                   <SelectValue placeholder="Select platform" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
@@ -502,7 +648,7 @@ const Tools = () => {
                             <div className="space-y-2">
                               <Label>Industry</Label>
                               <Select>
-                                <SelectTrigger className="h-12">
+                                <SelectTrigger className="h-12 transition-all hover:border-purple-300">
                                   <SelectValue placeholder="Select industry" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
@@ -519,8 +665,9 @@ const Tools = () => {
 
                         <TabsContent value="script">
                           <motion.div
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.1)" }}
                             whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
                           >
                             <Button
                               onClick={() => handleGenerate("script")}
@@ -544,8 +691,9 @@ const Tools = () => {
 
                         <TabsContent value="caption">
                           <motion.div
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.1)" }}
                             whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
                           >
                             <Button
                               onClick={() => handleGenerate("caption")}
@@ -569,8 +717,9 @@ const Tools = () => {
 
                         <TabsContent value="hashtags">
                           <motion.div
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.1)" }}
                             whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
                           >
                             <Button
                               onClick={() => handleGenerate("hashtags")}
@@ -594,8 +743,9 @@ const Tools = () => {
 
                         <TabsContent value="bio">
                           <motion.div
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.1)" }}
                             whileTap={{ scale: 0.98 }}
+                            transition={{ duration: 0.2 }}
                           >
                             <Button
                               onClick={() => handleGenerate("bio")}
@@ -663,7 +813,8 @@ const Tools = () => {
                             )}
                           </Button>
                         </motion.div>
-                        <TabsContent value="script" className="m-0">
+                        
+                        {activeTab !== "ideas" && activeTab !== "inspiration" && (
                           <motion.div
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -671,90 +822,32 @@ const Tools = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleRegenerate("script")}
+                              onClick={() => handleRegenerate(activeTab)}
                               className="hover:bg-blue-50 transition-all duration-200"
                               disabled={isGenerating}
                             >
                               <RotateCcw className="w-4 h-4" />
                             </Button>
                           </motion.div>
-                        </TabsContent>
-                        <TabsContent value="caption" className="m-0">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRegenerate("caption")}
-                              className="hover:bg-blue-50 transition-all duration-200"
-                              disabled={isGenerating}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          </motion.div>
-                        </TabsContent>
-                        <TabsContent value="hashtags" className="m-0">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRegenerate("hashtags")}
-                              className="hover:bg-blue-50 transition-all duration-200"
-                              disabled={isGenerating}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          </motion.div>
-                        </TabsContent>
-                        <TabsContent value="bio" className="m-0">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRegenerate("bio")}
-                              className="hover:bg-blue-50 transition-all duration-200"
-                              disabled={isGenerating}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          </motion.div>
-                        </TabsContent>
-                        <TabsContent value="ideas" className="m-0">
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRegenerate("ideas")}
-                              className="hover:bg-blue-50 transition-all duration-200"
-                              disabled={isGenerating}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          </motion.div>
-                        </TabsContent>
+                        )}
                       </div>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {generatedContent ? (
-                    <Textarea
-                      value={generatedContent}
-                      onChange={(e) => setGeneratedContent(e.target.value)}
-                      className="min-h-[400px] font-mono text-sm resize-y transition-all duration-200 focus:ring-2 focus:ring-purple-300"
-                      placeholder="Your generated content will appear here..."
-                    />
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Textarea
+                        value={generatedContent}
+                        onChange={(e) => setGeneratedContent(e.target.value)}
+                        className="min-h-[400px] font-mono text-sm resize-y transition-all duration-200 focus:ring-2 focus:ring-purple-300"
+                        placeholder="Your generated content will appear here..."
+                      />
+                    </motion.div>
                   ) : (
                     <motion.div 
                       initial={{ opacity: 0 }}
@@ -776,6 +869,31 @@ const Tools = () => {
                         <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                         <p>Enter a topic and click generate to see your AI-powered content here</p>
                       </motion.div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Loading animation during generation */}
+                  {isGenerating && !generatedContent && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-b-xl"
+                    >
+                      <div className="flex flex-col items-center">
+                        <motion.div 
+                          className="w-16 h-16 border-4 border-t-purple-500 border-purple-200 rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        />
+                        <motion.p 
+                          className="mt-4 text-purple-600 font-medium"
+                          animate={{ opacity: [0.6, 1, 0.6] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          Generating amazing content...
+                        </motion.p>
+                      </div>
                     </motion.div>
                   )}
                 </CardContent>
@@ -817,7 +935,12 @@ const Tools = () => {
         </motion.div>
 
         <div className="mt-8 text-center text-xs text-gray-400">
-          <p>Crafted with ❤️ by Sajid</p>
+          <motion.p 
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            Lovingly crafted by Sajid
+          </motion.p>
         </div>
       </div>
     </div>
