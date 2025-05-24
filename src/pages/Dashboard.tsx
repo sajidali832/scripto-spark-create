@@ -120,7 +120,8 @@ const Dashboard = () => {
   const getTimeElapsed = (timestamp) => {
     const now = new Date();
     const createdAt = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - createdAt) / 1000);
+    // Fix: Convert dates to numbers before arithmetic operations
+    const diffInSeconds = Math.floor((now.getTime() - createdAt.getTime()) / 1000);
     
     if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
