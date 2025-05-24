@@ -37,14 +37,17 @@ export const Logo = ({ size = "md", withText = true, animated = true }: LogoProp
       onMouseLeave={() => setIsHovering(false)}
     >
       <div className={`relative ${sizeClasses[size]}`}>
-        <img 
-          src="/lovable-uploads/61b6b4ad-b40d-452b-a365-2824497eada7.png" 
-          alt="Scripto Logo" 
-          className={`${sizeClasses[size]} ${isHovering && animated ? 'scale-110' : ''} ${isLoaded && animated ? 'animate-fade-in' : ''}
-            transition-transform duration-300`}
-        />
+        {/* Circular mask for the logo */}
+        <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-cyan-500 ${animated && isLoaded ? 'animate-float' : ''}`}>
+          <img 
+            src="/lovable-uploads/61b6b4ad-b40d-452b-a365-2824497eada7.png" 
+            alt="Scripto Logo" 
+            className={`${sizeClasses[size]} object-cover ${isHovering && animated ? 'scale-110' : ''} transition-transform duration-300`}
+          />
+        </div>
+        
         {animated && isHovering && (
-          <div className="absolute inset-0 bg-cyan-400 opacity-20 rounded-full blur-md animate-pulse"></div>
+          <div className="absolute inset-0 rounded-full bg-cyan-400 opacity-20 blur-md animate-pulse-glow"></div>
         )}
       </div>
       
