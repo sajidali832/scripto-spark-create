@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -129,17 +130,52 @@ const Dashboard = () => {
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring",
+        stiffness: 100,
+        damping: 10
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Welcome Section */}
-        <div className="mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-12"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 mb-4 sm:mb-0">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center mr-4 mb-4 sm:mb-0"
+            >
               <Sparkles className="w-6 h-6 text-white" />
-            </div>
+            </motion.div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">Welcome{userData?.full_name ? ` ${userData.full_name}` : ''} to SCRIPTO</h1>
               <p className="text-gray-600">Ready to create amazing content today?</p>
@@ -147,131 +183,165 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12">
-            <Card 
-              className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-              onClick={() => navigate('/tools')}
-            >
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Script Generator</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Create YouTube scripts</p>
-              </CardContent>
-            </Card>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-12"
+          >
+            <motion.div variants={itemVariants}>
+              <Card 
+                className="group hover:shadow-lg transition-all hover:-translate-y-2 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+                onClick={() => navigate('/tools')}
+              >
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Script Generator</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Create YouTube scripts</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card 
-              className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-              onClick={() => navigate('/tools')}
-            >
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                  <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Hashtag Generator</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Trending hashtags</p>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants}>
+              <Card 
+                className="group hover:shadow-lg transition-all hover:-translate-y-2 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+                onClick={() => navigate('/tools')}
+              >
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                    <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Hashtag Generator</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Trending hashtags</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card 
-              className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-              onClick={() => navigate('/tools')}
-            >
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Bio Generator</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Perfect profiles</p>
-              </CardContent>
-            </Card>
+            <motion.div variants={itemVariants}>
+              <Card 
+                className="group hover:shadow-lg transition-all hover:-translate-y-2 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+                onClick={() => navigate('/tools')}
+              >
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Bio Generator</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Perfect profiles</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card 
-              className="group hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
-              onClick={() => navigate('/tools')}
-            >
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-                  <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Ideas Generator</h3>
-                <p className="text-xs sm:text-sm text-gray-600">Content inspiration</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+            <motion.div variants={itemVariants}>
+              <Card 
+                className="group hover:shadow-lg transition-all hover:-translate-y-2 cursor-pointer border-0 bg-white/80 backdrop-blur-sm"
+                onClick={() => navigate('/tools')}
+              >
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                    <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Ideas Generator</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Content inspiration</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* User Content */}
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl sm:text-2xl">Your Content</CardTitle>
-            <Button 
-              onClick={() => navigate('/tools')}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create New
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600">Loading your content...</p>
-                </div>
-              </div>
-            ) : savedContent.length === 0 ? (
-              <div className="text-center py-12">
-                <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg sm:text-xl font-semibold mb-2">No content yet</h3>
-                <p className="text-gray-600 mb-6">Start creating amazing content with our AI tools</p>
-                <Button 
-                  onClick={() => navigate('/tools')}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Content
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3 sm:space-y-4">
-                {savedContent.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center space-x-4 mb-3 sm:mb-0">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                        {getTypeIcon(item.type)}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
-                        <p className="text-xs sm:text-sm text-gray-600">{item.platform || 'General'} • {getTimeElapsed(item.created_at)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 self-end sm:self-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopy(item.id)}
-                        className="hover:bg-purple-100"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(item.id)}
-                        className="hover:bg-red-100 text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-xl sm:text-2xl">Your Content</CardTitle>
+              <Button 
+                onClick={() => navigate('/tools')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-105"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600">Loading your content...</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ) : savedContent.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-center py-12"
+                >
+                  <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold mb-2">No content yet</h3>
+                  <p className="text-gray-600 mb-6">Start creating amazing content with our AI tools</p>
+                  <Button 
+                    onClick={() => navigate('/tools')}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:scale-105"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Content
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-3 sm:space-y-4"
+                >
+                  {savedContent.map((item) => (
+                    <motion.div 
+                      key={item.id} 
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.01 }}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-4 mb-3 sm:mb-0">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                          {getTypeIcon(item.type)}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm sm:text-base">{item.title}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">{item.platform || 'General'} • {getTimeElapsed(item.created_at)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 self-end sm:self-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopy(item.id)}
+                          className="hover:bg-purple-100 transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                          className="hover:bg-red-100 text-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
